@@ -23,6 +23,10 @@ A Smart Queue Management System integrated with Hospital Management System (HMS)
 - Doctor Panel
 - Admin Panel
 
+  ## 🎥 Demo Video
+
+[▶️ Watch QueueZero Demo](https://raw.githubusercontent.com/snehabenny12/QueueZero/main/Video%20Project%201.mp4)
+
 ## ⚙️ Installation
 ```bash
 git clone https://github.com/snehabenny12/QueueZero.git
