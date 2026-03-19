@@ -1,0 +1,185 @@
+{% extends "hospital/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- Font Awesome CDN for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+    /* Full-screen hospital background */
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Poppins', 'Segoe UI', sans-serif;
+        min-height: 100vh;
+        background: url("{% static 'css/images/hp2.jpg' %}") no-repeat center center fixed;
+        background-size: cover;
+        position: relative;
+    }
+
+    /* Dark overlay */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 0;
+    }
+
+    /* Glassmorphic form container */
+    .patient-form-container {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        max-width: 450px;
+        margin: 5% auto;
+        padding: 40px 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        animation: fadeInUp 0.8s forwards;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+
+    @keyframes fadeInUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Heading style */
+    .patient-form-container h2 {
+        text-align: center;
+        color: #fff;
+        margin-bottom: 30px;
+        font-size: 28px;
+        letter-spacing: 1px;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    }
+
+    /* Input group with icon */
+    .input-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .input-group i {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        transform: translateY(-50%);
+        color: #3498db;
+        font-size: 18px;
+        transition: 0.3s;
+    }
+
+    /* Inputs */
+    .patient-form-container input,
+    .patient-form-container select {
+        width: 100%;
+        padding: 12px 12px 12px 40px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        transition: 0.3s;
+        outline: none;
+        background: rgba(255, 255, 255, 0.6);
+        color: #2c3e50;
+        box-sizing: border-box;
+        font-size: 15px;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    ::placeholder {
+        color: #555;
+    }
+
+    /* Button */
+    .patient-form-container button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(90deg, #3498db, #2980b9);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+
+    .patient-form-container button:hover {
+        background: linear-gradient(90deg, #2980b9, #2471a3);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+        .patient-form-container {
+            margin: 10% 15px;
+            padding: 30px 20px;
+        }
+    }
+</style>
+
+<div class="patient-form-container">
+    <h2><i class="fa-solid fa-hospital"></i> Patient Registration</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="input-group">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" name="username" class="form-control" placeholder="Username" required>
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" name="password" class="form-control" placeholder="Password" required>
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-id-card"></i>
+            <input type="text" name="name" class="form-control" placeholder="Full Name" required>
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-phone"></i>
+            <input type="tel" name="mobile" class="form-control" placeholder="Mobile Number" pattern="[0-9]{10}" required>
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-calendar-days"></i>
+            <input type="number" name="age" class="form-control" placeholder="Age" required>
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-venus-mars"></i>
+            <select name="gender" class="form-control" required>
+                <option value="" disabled selected>Gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </select>
+        </div>
+
+        <button type="submit">
+            <i class="fa-solid fa-paper-plane"></i> Register
+        </button>
+    </form>
+</div>
+
+{% endblock %}

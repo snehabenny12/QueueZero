@@ -1,0 +1,464 @@
+{% extends 'hospital/base.html' %}
+{% block content %}
+
+<!-- Professional Clinical Token Layout (for printing) -->
+<div class="token-header">
+    <h1>🏥 QueueZero Hospital</h1>
+    <div class="hospital-name">Smart Queue Management System</div>
+</div>
+
+<div class="token-content">
+    <div class="token-number">
+        <div class="label">QUEUE TOKEN</div>
+        <h2 id="token-number">{{ token.token_number }}</h2>
+    </div>
+
+    <div class="token-details">
+        <div class="detail-item">
+            <div class="detail-label">PATIENT NAME</div>
+            <div class="detail-value">{{ token.patient.user.first_name }} {{ token.patient.user.last_name }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">DOCTOR</div>
+            <div class="detail-value">Dr. {{ token.doctor.user.first_name }} {{ token.doctor.user.last_name }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">DEPARTMENT</div>
+            <div class="detail-value">{{ token.doctor.department }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">PATIENTS AHEAD</div>
+            <div class="detail-value" id="patients-ahead">{{ patients_ahead }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">ESTIMATED WAIT</div>
+            <div class="detail-value" id="estimated-wait">{{ estimated_wait }} minutes</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">GENERATED</div>
+            <div class="detail-value">{{ token.created_at|date:"M d, Y H:i" }}</div>
+        </div>
+    </div>
+
+    <div class="qr-section">
+        <div class="qr-code">
+            {% if token.qr_image %}
+                <img src="{{ token.qr_image.url }}" alt="QR Code">
+            {% else %}
+                <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">
+            {% endif %}
+        </div>
+        <p class="qr-label">Scan for verification</p>
+    </div>
+
+    <div class="status-indicator">
+        <div class="status-badge" id="token-status">{{ token.status|upper }}</div>
+    </div>
+</div>
+
+<div class="token-footer">
+    <strong>Please arrive only when your turn is near. Show this token at the reception when called.</strong>
+</div>
+
+<!-- Web Interface Elements (hidden when printing) -->
+<div id="token-card" class="web-only">
+    <div class="header">
+        <h1>🏥 QueueZero</h1>
+        <p class="sub-header">Smart Hospital Queue System</p>
+    </div>
+
+    <div class="token-info">
+        <h2>Your Token: <span id="token-number-web">{{ token.token_number }}</span></h2>
+        <p><strong>Patient:</strong> {{ token.patient.user.first_name }} {{ token.patient.user.last_name }}</p>
+        <p><strong>Doctor:</strong> Dr. {{ token.doctor.user.first_name }} {{ token.doctor.user.last_name }}</p>
+        <p><strong>Department:</strong> {{ token.doctor.department }}</p>
+        <p><strong>Status:</strong> <span id="token-status-web">{{ token.status|capfirst }}</span></p>
+        <p><strong>Estimated Wait:</strong> <span id="estimated-wait-web">{{ estimated_wait }}</span> minutes</p>
+        <p><strong>Patients Ahead:</strong> <span id="patients-ahead-web">{{ patients_ahead }}</span></p>
+    </div>
+
+    <div class="qr-code">
+        {% if token.qr_image %}
+            <img src="{{ token.qr_image.url }}" alt="QR Code">
+        {% else %}
+            <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">
+        {% endif %}
+        <p class="qr-label">Scan this QR code for verification</p>
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'queuezero:token_print' token.id %}" target="_blank" class="print-btn">Print / Download Token</a>
+        <a href="{% url 'queuezero:generate_token' %}" class="new-token-btn">Generate Another Token</a>
+    </div>
+
+    <div class="footer">
+        <p>Show this token at the reception when called</p>
+        <p><small>Token generated on: {{ token.created_at|date:"M d, Y H:i" }}</small></p>
+    </div>
+</div>
+
+<script>
+// Real-time status updates every 5 seconds
+function updateTokenStatus() {
+    fetch('{% url "queuezero:check_token_status" token.id %}')
+        .then(response => response.json())
+        .then(data => {
+            // Update web interface elements
+            const webTokenNumber = document.getElementById('token-number-web');
+            const webTokenStatus = document.getElementById('token-status-web');
+            const webPatientsAhead = document.getElementById('patients-ahead-web');
+            const webEstimatedWait = document.getElementById('estimated-wait-web');
+            
+            if (webTokenNumber) webTokenNumber.textContent = data.token_number;
+            if (webTokenStatus) webTokenStatus.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            if (webPatientsAhead) webPatientsAhead.textContent = data.patients_ahead;
+            if (webEstimatedWait) webEstimatedWait.textContent = data.estimated_wait;
+            
+            // Update print interface elements
+            const printTokenNumber = document.getElementById('token-number');
+            const printTokenStatus = document.getElementById('token-status');
+            const printPatientsAhead = document.getElementById('patients-ahead');
+            const printEstimatedWait = document.getElementById('estimated-wait');
+            
+            if (printTokenNumber) printTokenNumber.textContent = data.token_number;
+            if (printTokenStatus) printTokenStatus.textContent = data.status.toUpperCase();
+            if (printPatientsAhead) printPatientsAhead.textContent = data.patients_ahead;
+            if (printEstimatedWait) printEstimatedWait.textContent = data.estimated_wait + ' minutes';
+            
+            // Visual feedback for status changes
+            if (webTokenStatus && data.status === 'called') {
+                webTokenStatus.style.color = '#28a745';
+                webTokenStatus.style.fontWeight = 'bold';
+            }
+            
+            if (printTokenStatus && data.status === 'called') {
+                printTokenStatus.style.background = '#28a745';
+                printTokenStatus.style.color = 'white';
+            }
+        })
+        .catch(error => console.log('Status update failed:', error));
+}
+
+// Update status every 5 seconds
+setInterval(updateTokenStatus, 5000);
+</script>
+
+<style>
+/* Hide professional token layout on screen */
+.token-header, .token-content, .token-footer {
+    display: none;
+}
+
+/* Show web interface on screen */
+.web-only {
+    display: block;
+}
+
+#token-card {
+    max-width: 450px;
+    margin: 30px auto;
+    padding: 30px;
+    border: 3px solid #007BFF;
+    border-radius: 15px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.2);
+}
+
+.header h1 {
+    margin: 0;
+    color: #007BFF;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.sub-header {
+    margin: 5px 0 20px 0;
+    font-size: 16px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.token-info {
+    margin: 25px 0;
+    font-size: 16px;
+    line-height: 1.6;
+    background: rgba(0, 123, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.token-info h2 {
+    color: #FF5733;
+    font-size: 28px;
+    margin: 0 0 15px 0;
+    font-weight: bold;
+}
+
+.token-info p {
+    margin: 8px 0;
+    color: #495057;
+}
+
+.qr-code {
+    margin: 25px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    border: 2px dashed #007BFF;
+}
+
+.qr-code img {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+    display: block;
+}
+
+.qr-label {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.actions {
+    margin: 25px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.print-btn, .new-token-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.print-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.print-btn:hover {
+    background: linear-gradient(135deg, #218838, #1ea085);
+    transform: translateY(-2px);
+}
+
+.new-token-btn {
+    background: linear-gradient(135deg, #6f42c1, #e83e8c);
+    color: white;
+    text-align: center;
+}
+
+.new-token-btn:hover {
+    background: linear-gradient(135deg, #5a359a, #d91a72);
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.footer p {
+    margin: 5px 0;
+}
+
+/* Print-friendly styling for professional clinical token */
+@media print {
+    /* Hide all web elements */
+    nav, .actions, .footer, .header, .sub-header, .web-only { 
+        display: none !important; 
+    }
+    
+    /* Show professional token layout */
+    .token-header, .token-content, .token-footer {
+        display: block !important;
+    }
+    
+    /* Reset page styling */
+    body { 
+        margin: 0; 
+        padding: 0;
+        background: white !important;
+        font-family: 'Arial', sans-serif;
+        font-size: 12pt;
+    }
+    
+    /* Professional token layout */
+    #token-card { 
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: white;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    /* Token header with hospital branding */
+    .token-header {
+        background: #2c3e50;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 0;
+    }
+    
+    .token-header h1 {
+        margin: 0;
+        font-size: 24pt;
+        font-weight: bold;
+    }
+    
+    .token-header .hospital-name {
+        font-size: 14pt;
+        margin-top: 5px;
+        opacity: 0.9;
+    }
+    
+    /* Main token content */
+    .token-content {
+        padding: 20px;
+        border: 2px solid #2c3e50;
+        background: white;
+    }
+    
+    .token-number {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .token-number h2 {
+        font-size: 36pt;
+        color: #e74c3c;
+        margin: 0;
+        font-weight: bold;
+    }
+    
+    .token-number .label {
+        font-size: 14pt;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+    
+    /* Token details grid */
+    .token-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .detail-item {
+        padding: 10px;
+        background: #f8f9fa;
+        border-left: 4px solid #007BFF;
+    }
+    
+    .detail-label {
+        font-weight: bold;
+        color: #2c3e50;
+        font-size: 11pt;
+    }
+    
+    .detail-value {
+        font-size: 12pt;
+        color: #333;
+        margin-top: 2px;
+    }
+    
+    /* QR code section */
+    .qr-section {
+        text-align: center;
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px dashed #007BFF;
+        background: #f8f9fa;
+    }
+    
+    .qr-code img {
+        width: 120px;
+        height: 120px;
+        border: 1px solid #ddd;
+    }
+    
+    .qr-label {
+        font-size: 10pt;
+        color: #666;
+        margin-top: 8px;
+        font-style: italic;
+    }
+    
+    /* Status indicator */
+    .status-indicator {
+        text-align: center;
+        margin: 15px 0;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #ffc107;
+        color: #2c3e50;
+        font-weight: bold;
+        font-size: 14pt;
+        border-radius: 20px;
+    }
+    
+    /* Footer with instructions */
+    .token-footer {
+        background: #ecf0f1;
+        padding: 10px;
+        text-align: center;
+        font-size: 10pt;
+        color: #2c3e50;
+        border-top: 1px solid #bdc3c7;
+    }
+    
+    /* Hide web-specific elements */
+    .token-info { 
+        background: transparent; 
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Ensure proper page breaks */
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    #token-card {
+        margin: 15px;
+        padding: 20px;
+    }
+    
+    .token-info h2 {
+        font-size: 24px;
+    }
+    
+    .qr-code img {
+        width: 150px;
+        height: 150px;
+    }
+}
+</style>
+
+{% endblock %}

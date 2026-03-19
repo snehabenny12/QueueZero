@@ -1,0 +1,107 @@
+{% extends 'hospital/base.html' %}
+{% block content %}
+<div class="patient-container">
+    <h2>Welcome {{ request.user.first_name }}!</h2>
+    <p>Your token information is shown below. Please arrive only when your turn is near.</p>
+
+    <div class="d-flex justify-content-center mb-3">
+        <a href="{% url 'queuezero:generate_token' %}" class="btn btn-primary mx-2 {% if token %}disabled{% endif %}">Generate Token</a>
+        {% if token %}
+            <a href="{% url 'queuezero:my_token' %}" class="btn btn-info mx-2">My Token</a>
+            <a href="{% url 'queuezero:generate_token' %}?new=1" class="btn btn-success mx-2">Generate New Token</a>
+        {% endif %}
+    </div>
+
+    {% if token %}
+    <div class="token-card">
+        <p><strong>Patient Name: </strong>{{ request.user.first_name }} {{ request.user.last_name }}</p>
+        <p><strong>Token #: </strong>{{ token.token_number }}</p>
+        <p><strong>Doctor: </strong>Dr. {{ token.doctor.user.first_name }} ({{ token.doctor.department }})</p>
+        <p><strong>Patients ahead: </strong><span id="patientsAhead">{{ token.patients_ahead }}</span></p>
+        <p><strong>Estimated wait: </strong><span id="estimatedWait">{{ token.estimated_wait_time }} min</span></p> 
+        <p><strong>Status: </strong><span id="tokenStatus">{{ token.status|capfirst }}</span></p>
+
+        <div class="qr-code">
+            {% if token.qr_image %}
+                <img src="{{ token.qr_image.url }}" alt="Token QR Code">
+            {% else %}
+                <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="Token QR Code">
+            {% endif %}
+        </div>
+
+        <!-- <button class="btn btn-outline-primary mt-3" onclick="window.print()">Print / Save Token</button> -->
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-4">You have not generated a token yet.</div>
+    {% endif %}
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<style>
+.patient-container {
+    max-width: 450px;
+    margin: 30px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+}
+
+.token-card {
+    border: 2px solid #007BFF;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    background: #f9f9f9;
+}
+
+.qr-code img {
+    width: 150px;
+    height: 150px;
+    margin: 10px 0;
+}
+
+button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+@media (max-width: 500px) {
+    .patient-container {
+        margin: 15px;
+        padding: 10px;
+    }
+    .qr-code img {
+        width: 120px;
+        height: 120px;
+    }
+    button {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+}
+</style>
+
+<!-- Live token status update -->
+{% if token %}
+<script>
+setInterval(() => {
+    fetch("{% url 'queuezero:check_token_status' token.id %}")
+
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('tokenStatus').textContent = data.status;
+        document.getElementById('patientsAhead').textContent = data.patients_ahead;
+        document.getElementById('estimatedWait').textContent = data.estimated_wait + " min";
+
+    });
+}, 10000); // updates every 10 seconds
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+<!-- Doctors Section
+<h4 class="mb-3 text-primary">Available Doctors</h4>
+<div class="row">
+  {% for doc in doctors %}
+    {% with counts=doctor_token_counts.doc.id %}
+    <div class="col-md-4 col-sm-6 mb-4">
+      <div class="card doctor-card h-100 shadow-sm">
+        <h5 class="text-primary mb-1">Dr. {{ doc.name }}</h5>
+        <p class="mb-1"><strong>Dept:</strong> {{ doc.department.name }}</p>
+        {% if doc.specialization %}
+          <p class="mb-1"><strong>Specialization:</strong> {{ doc.specialization }}</p>
+        {% endif %}
+        <p class="text-muted mb-2">
+          Currently serving: {{ counts.called|default:"0" }} | Waiting: {{ counts.waiting|default:"0" }}
+        </p>
+        <a href="{% url 'queuezero:generate_token' %}" class="btn btn-primary btn-sm mt-auto btn-token align-self-start">Book Token</a>
+      </div>
+    </div>
+    {% endwith %}
+  {% empty %}
+    <p class="text-muted">No doctors available at the moment.</p>
+  {% endfor %}
+</div> -->

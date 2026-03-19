@@ -1,0 +1,112 @@
+{% extends "hospital/base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+  body {
+    background: #f8f9fa;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .about-container {
+    max-width: 1000px;
+    margin: 80px auto;
+    background: white;
+    padding: 40px 50px;
+    border-radius: 20px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+    text-align: center;
+  }
+
+  .about-container h1 {
+    font-size: 2.5rem;
+    color: #0072ff;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .about-container p {
+    color: #444;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+
+  /* Features Section */
+  .features-section h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0072ff;
+    margin-bottom: 30px;
+  }
+
+  .features {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+  }
+
+  .feature-box {
+    background: rgba(0, 114, 255, 0.08);
+    border-radius: 15px;
+    padding: 25px 20px;
+    width: 260px;
+    text-align: center;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    transition: 0.3s;
+  }
+
+  .feature-box:hover {
+    transform: translateY(-8px);
+    background: rgba(0, 114, 255, 0.12);
+  }
+
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+
+  .feature-box h4 {
+    color: #0072ff;
+    margin-bottom: 8px;
+  }
+
+  .feature-box p {
+    color: #555;
+    font-size: 0.95rem;
+  }
+</style>
+
+<div class="about-container">
+  <h1>About QueueZero HMS</h1>
+  <p>
+    QueueZero HMS is a smart Hospital Management System designed to simplify patient queue handling,
+    appointment scheduling, and doctor-patient interactions. It provides real-time token management,
+    notifications, and dashboards for smooth hospital operations.
+  </p>
+
+  <div class="features-section">
+    <h2>Our Key Features</h2>
+    <div class="features">
+      <div class="feature-box">
+        <div class="feature-icon">🕒</div>
+        <h4>Fast Queue Management</h4>
+        <p>Generate and manage patient tokens in real-time for smoother consultations.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon">👩‍⚕️</div>
+        <h4>Doctor-Friendly Dashboard</h4>
+        <p>Helps doctors manage appointments and queues efficiently.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon">💬</div>
+        <h4>Smart Notifications</h4>
+        <p>Patients get instant alerts and reminders about their token status.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

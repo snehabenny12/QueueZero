@@ -1,0 +1,203 @@
+{% extends 'hospital/base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: url("{% static 'images/hp2.jpg' %}") no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+    }
+
+    .form-container {
+        max-width: 600px;
+        margin: 60px auto;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #2c3e50;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+        color: #34495e;
+        font-size: 16px;
+    }
+
+    select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        font-size: 16px;
+        background: #fff;
+        transition: border-color 0.3s ease;
+    }
+
+    select:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    select:disabled {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+    }
+
+    button:disabled:hover {
+        background: #6c757d;
+        transform: none;
+    }
+
+    button {
+        width: 100%;
+        padding: 16px;
+        font-size: 18px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.3s ease;
+        margin-top: 20px;
+    }
+
+    button:hover {
+        background: linear-gradient(135deg, #0056b3, #003d80);
+        transform: translateY(-2px);
+    }
+
+    .info-text {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+        font-style: italic;
+    }
+</style>
+
+<div class="form-container">
+    <h2>🏥 Generate Your Token</h2>
+    <p class="info-text">First select a department, then choose a doctor to get your queue token. You'll receive a QR code for easy tracking.</p>
+
+    <form method="post" action="{% url 'queuezero:generate_token' %}">
+        {% csrf_token %}
+
+        <!-- Department Selection -->
+        <div class="form-group">
+            <label for="department-select">Select Department:</label>
+            <select name="department" id="department-select" required>
+                <option value="">-- Choose Department --</option>
+                {% for department in departments %}
+                <option value="{{ department }}">{{ department }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Doctor Selection -->
+        <div class="form-group">
+            <label for="doctor-select">Select Doctor:</label>
+            <select name="doctor_id" id="doctor-select" required disabled>
+                <option value="">-- First select a department --</option>
+            </select>
+        </div>
+
+        <button type="submit" id="submit-btn" disabled>Generate Token</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Department selection change handler
+    $('#department-select').change(function() {
+        var selectedDepartment = $(this).val();
+        var doctorSelect = $('#doctor-select');
+        var submitBtn = $('#submit-btn');
+        
+        if (selectedDepartment) {
+            // Enable doctor dropdown
+            doctorSelect.prop('disabled', false);
+            
+            // Fetch doctors for selected department
+            $.ajax({
+                url: "{% url 'queuezero:doctors_by_department' %}",
+                data: { 
+                    'department': selectedDepartment,
+                    'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                type: 'GET',
+                success: function(data) {
+                    // Clear existing options
+                    doctorSelect.html('<option value="">-- Select Doctor --</option>');
+                    
+                    // Add doctors for selected department
+                    if (data && data.length > 0) {
+                        $.each(data, function(index, doctor) {
+                            doctorSelect.append(
+                                '<option value="' + doctor.id + '">' +
+                                'Dr. ' + doctor.user__first_name + ' ' + doctor.user__last_name +
+                                '</option>'
+                            );
+                        });
+                    } else {
+                        doctorSelect.append('<option value="">No doctors available in this department</option>');
+                    }
+                    
+                    // Disable submit button until doctor is selected
+                    submitBtn.prop('disabled', true);
+                },
+                error: function() {
+                    doctorSelect.html('<option value="">Error loading doctors</option>');
+                    submitBtn.prop('disabled', true);
+                }
+            });
+        } else {
+            // Reset doctor dropdown
+            doctorSelect.prop('disabled', true);
+            doctorSelect.html('<option value="">-- First select a department --</option>');
+            submitBtn.prop('disabled', true);
+        }
+    });
+    
+    // Doctor selection change handler
+    $('#doctor-select').change(function() {
+        var selectedDoctor = $(this).val();
+        var submitBtn = $('#submit-btn');
+        
+        if (selectedDoctor) {
+            submitBtn.prop('disabled', false);
+        } else {
+            submitBtn.prop('disabled', true);
+        }
+    });
+});
+</script>
+
+{% endblock %}

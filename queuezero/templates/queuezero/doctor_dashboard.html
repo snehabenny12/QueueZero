@@ -1,0 +1,102 @@
+{% extends 'hospital/base.html' %}
+{% block content %}
+
+<div class="dashboard-container">
+    <div class="header-section">
+        <h2>🏥 Doctor Dashboard</h2>
+        <p class="welcome-text">Welcome Dr. {{ request.user.first_name }} {{ request.user.last_name }}</p>
+        <p class="department-info">Department: {{ doctor.department }}</p>
+    </div>
+
+    <div class="availability-section">
+        <form method="post" action="{% url 'queuezero:toggle_availability' %}" class="availability-form">
+            {% csrf_token %}
+            <button type="submit" class="toggle-btn {% if doctor.is_available %}available{% else %}unavailable{% endif %}">
+                {% if doctor.is_available %}Set Not Available{% else %}Set Available{% endif %}
+            </button>
+            <span class="status-indicator {% if doctor.is_available %}status-available{% else %}status-unavailable{% endif %}">
+                {% if doctor.is_available %}🟢 Available{% else %}🔴 Not Available{% endif %}
+            </span>
+        </form>
+    </div>
+
+    <div class="queue-section">
+        <h3>Token Queue</h3>
+        
+        {% if tokens %}
+        <div class="queue-stats">
+            <div class="stat-card">
+                <span class="stat-number">{{ total_tokens }}</span>
+                <span class="stat-label">Total Tokens</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ waiting_tokens }}</span>
+                <span class="stat-label">Waiting</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ called_tokens }}</span>
+                <span class="stat-label">Called</span>
+            </div>
+        </div>
+
+        <div class="table-responsive table-container">
+            <table class="table table-bordered table-striped align-middle token-table">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Token #</th>
+                        <th>Patient Name</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for token in tokens %}
+                    <tr class="{% if token.status == 'called' %}table-success{% elif token.status == 'waiting' %}table-warning text-dark{% else %}table-light{% endif %}">
+                        <td class="token-number">{{ token.token_number }}</td>
+                        <td style="color: #0056b3; font-weight: 700;">{{ token.patient.name }}</td>
+                        <td>
+                            {% if token.status == 'waiting' %}
+                                <span class="badge bg-warning text-dark" style="font-weight:900;">⏳ Waiting</span>
+                            {% elif token.status == 'called' %}
+                                <span class="badge bg-success" style="font-weight:900;">📢 Called</span>
+                            {% else %}
+                                <span class="badge bg-secondary" style="font-weight:900;">✅ Served</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ token.created_at|date:"H:i" }}</td>
+                        <td>
+                            {% if token.status == 'waiting' %}
+                                <form method="post" action="{% url 'queuezero:call_next_token' token.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success call-btn">📢 Call</button>
+                                </form>
+                            {% elif token.status == 'called' %}
+                                <form method="post" action="{% url 'queuezero:mark_served' token.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">✅ Mark as Served</button>
+                                </form>
+                            {% else %}
+                                <span class="served-text">Completed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-queue">
+            <div class="empty-icon">📋</div>
+            <h4>No patients in queue at the moment</h4>
+            <p>Your queue is empty. Patients will appear here when they generate tokens.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Your previous CSS styles remain unchanged */
+</style>
+
+{% endblock %}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QueueZero HMS</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'queuezero/styles.css' %}">
+    <style>
+        /* Navbar Styles */
+        nav {
+            background-color: #0072ff;
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        nav a {
+            color: #f8f9fa;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
+
+        nav a:hover {
+            color: #FFD700 !important;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        nav a.active {
+            color: #FFD700 !important;
+            font-weight: 600;
+        }
+
+        /* Optional: make nav responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'hospital:home' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a>
+        <a href="{% url 'hospital:about' %}">About</a>
+
+
+        {% if user.is_authenticated %}
+            {% if user.patient %}
+                <a href="{% url 'queuezero:patient_dashboard' %}" class="{% if request.path == '/patient/dashboard/' %}active{% endif %}">My Token</a>
+            {% endif %}
+            {% if user.doctor %}
+                <a href="{% url 'queuezero:doctor_dashboard' %}" class="{% if request.path == '/doctor/dashboard/' %}active{% endif %}">My Queue</a>
+            {% endif %}
+            <a href="{% url 'hospital:logout' %}">Logout</a>
+        {% else %}
+            <!-- <a href="{% url 'hospital:login' %}">Login</a>
+            <a href="{% url 'hospital:patient_register' %}">Register</a> -->
+        {% endif %}
+    </nav>
+
+    {% block content %}{% endblock %}
+</body>
+</html>

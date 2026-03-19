@@ -1,0 +1,18 @@
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #token-card, #token-card * {
+        visibility: visible;
+    }
+    #token-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 18px;
+    }
+    button, a {
+        display: none;
+    }
+}
